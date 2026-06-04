@@ -1,0 +1,230 @@
+body { font-family:'Jost',system-ui,sans-serif; }
+    .font-display { font-family:'Cormorant Garamond',Georgia,serif; }
+
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+    @keyframes heroZoom{ to{transform:scale(1)} }
+    @keyframes spin    { to{transform:rotate(360deg)} }
+
+    .anim-up { animation:fadeUp .7s cubic-bezier(.25,.46,.45,.94) both; }
+    .anim-in { animation:fadeIn .5s ease both; }
+
+    .hero-bg {
+      background:
+        linear-gradient(160deg,rgba(16,44,38,.80) 0%,rgba(16,44,38,.45) 55%,rgba(16,44,38,.85) 100%),
+        url('https://images.unsplash.com/photo-1511920170033-f8396924c348?w=1600&q=80') center/cover no-repeat;
+      transform:scale(1.05);
+      animation:heroZoom 10s ease-out forwards;
+    }
+    .grain {
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+    }
+
+    /* lewa strona */
+    .si {
+      width:100%; padding:11px 15px;
+      background:rgba(247,231,206,.07);
+      border:1.5px solid rgba(247,231,206,.15);
+      border-radius:2px;
+      color:#F7E7CE;
+      font-family:'Jost',system-ui,sans-serif;
+      font-size:13px; font-weight:200;
+      outline:none;
+      transition:border-color .25s,background .25s;
+      appearance:none;
+    }
+    .si::placeholder { color:rgba(247,231,206,.25); }
+    .si:focus { border-color:rgba(201,169,110,.55); background:rgba(247,231,206,.11); }
+    select.si option { background:#102C26; color:#F7E7CE; }
+
+    /* prawa strona */
+    .fi {
+      width:100%; padding:11px 15px;
+      border:1.5px solid rgba(16,44,38,.15);
+      border-radius:2px;
+      background:#fff;
+      color:#102C26;
+      font-family:'Jost',system-ui,sans-serif;
+      font-size:13px; font-weight:200;
+      outline:none;
+      transition:border-color .25s,box-shadow .25s;
+      appearance:none;
+    }
+    .fi:focus { border-color:#102C26; box-shadow:0 0 0 3px rgba(16,44,38,.06); }
+    textarea.fi { resize:vertical; min-height:72px; }
+
+    /* wybór godziny w rezerwacji*/
+    .hour-pill {
+      padding:7px 13px; border-radius:2px;
+      border:1.5px solid rgba(247,231,206,.2);
+      background:rgba(247,231,206,.06); color:rgba(247,231,206,.75);
+      font-family:'Jost',system-ui,sans-serif;
+      font-size:11px; font-weight:300; letter-spacing:.1em;
+      cursor:pointer; transition:all .2s;
+    }
+    .hour-pill:hover    { border-color:rgba(201,169,110,.5); background:rgba(247,231,206,.12); color:#F7E7CE; }
+    .hour-pill.selected { background:#C9A96E; color:#102C26; border-color:#C9A96E; font-weight:500; }
+
+    /* pojedyncze karty z pozycji z menu*/
+    .card {
+      display:flex; align-items:flex-start; gap:12px;
+      padding:14px 16px; border-radius:2px;
+      border:1.5px solid rgba(16,44,38,.1);
+      background:#fff; cursor:pointer; transition:all .2s;
+    }
+    .card:hover { border-color:rgba(16,44,38,.25); box-shadow:0 4px 16px rgba(16,44,38,.06); }
+    .card.sel   { border-color:#102C26; background:rgba(16,44,38,.04); }
+    .chk {
+      width:18px; height:18px; border-radius:50%;
+      border:1.5px solid rgba(16,44,38,.25);
+      flex-shrink:0; margin-top:2px;
+      transition:all .2s; position:relative;
+    }
+    .card.sel .chk { background:#102C26; border-color:#102C26; }
+    .card.sel .chk::after {
+      content:''; position:absolute; left:4px; top:1px;
+      width:5px; height:9px;
+      border-right:2px solid #fff; border-bottom:2px solid #fff;
+      transform:rotate(45deg);
+    }
+    .qty-wrap { display:none; flex-direction:column; align-items:center; gap:4px; }
+    .qty-wrap.visible { display:flex; }
+    .qty-btn {
+      width:22px; height:22px; border-radius:50%;
+      border:1px solid rgba(16,44,38,.2);
+      background:#fff; color:#102C26;
+      font-size:14px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .15s;
+    }
+    .qty-btn:hover { background:#102C26; color:#fff; }
+
+    /* karta alergii*/
+    .acard {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px; border-radius:2px;
+      border:1.5px solid rgba(16,44,38,.1);
+      background:#fff; cursor:pointer; transition:all .2s;
+    }
+    .acard:hover { border-color:rgba(16,44,38,.25); }
+    .acard.sel   { border-color:#C9A96E; background:rgba(201,169,110,.08); }
+    .achk {
+      width:16px; height:16px; border-radius:2px;
+      border:1.5px solid rgba(16,44,38,.25);
+      flex-shrink:0; transition:all .2s; position:relative;
+    }
+    .acard.sel .achk { background:#C9A96E; border-color:#C9A96E; }
+    .acard.sel .achk::after {
+      content:''; position:absolute; left:3px; top:0;
+      width:5px; height:9px;
+      border-right:2px solid #fff; border-bottom:2px solid #fff;
+      transform:rotate(45deg);
+    }
+
+    /* zakładki z menu */
+    .ctab {
+      padding:7px 16px; border-radius:2px;
+      border:1.5px solid rgba(16,44,38,.15);
+      background:#fff; color:#102C26;
+      font-family:'Jost',system-ui,sans-serif;
+      font-size:10px; font-weight:300; letter-spacing:.15em; text-transform:uppercase;
+      cursor:pointer; transition:all .2s;
+    }
+    .ctab.active { background:#102C26; color:#F7E7CE; border-color:#102C26; }
+
+    /* podsumowanie zamowienia*/
+    .srow {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:12px; padding:6px 0;
+      border-bottom:1px solid rgba(16,44,38,.06);
+    }
+
+    /* kólko ladowania na przycisku zarezerwuj stolik*/
+    .spin {
+      width:14px; height:14px;
+      border:1.5px solid rgba(247,231,206,.3); border-top-color:#F7E7CE;
+      border-radius:50%; animation:spin .7s linear infinite; display:none;
+    }
+
+    /* ukrywanie zakładek rezerwacja, kalendarz i admin po to, aby nie przeładowywało się */
+    .view { display:none; }
+    .view.active { display:block; }
+
+    /* Nav tab */
+    .nav-tab {
+      padding:10px 18px;
+      background:transparent; color:rgba(247,231,206,.45);
+      border:none; border-bottom:2px solid transparent;
+      font-family:'Jost',system-ui,sans-serif;
+      font-size:10px; font-weight:300; letter-spacing:.2em; text-transform:uppercase;
+      cursor:pointer; transition:all .2s;
+    }
+    .nav-tab.active { color:#F7E7CE; border-bottom-color:#C9A96E; }
+    .nav-tab:hover  { color:rgba(247,231,206,.85); }
+
+    /* Toast - pasek powiadomienia po zalogowaniu/rejestracji */
+    #toast {
+      position:fixed; bottom:24px; left:50%; z-index:9999;
+      transform:translateX(-50%) translateY(12px);
+      background:#102C26; color:#F7E7CE;
+      padding:13px 24px; border-radius:2px;
+      font-size:12px; font-weight:200; letter-spacing:.06em;
+      opacity:0; pointer-events:none;
+      transition:all .35s; max-width:calc(100vw - 48px); text-align:center;
+    }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* kalendarz */
+    .cal-scroll { overflow-x:auto; }
+    table.cal { border-collapse:collapse; min-width:580px; width:100%; }
+    table.cal th {
+      padding:8px 10px;
+      background:rgba(16,44,38,.04);
+      border:1px solid rgba(16,44,38,.08);
+      font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+      color:#102C26; text-align:center;
+      font-family:'Jost',system-ui,sans-serif;
+    }
+    table.cal td {
+      padding:6px 8px; border:1px solid rgba(16,44,38,.06);
+      background:#fff; min-width:90px; vertical-align:top;
+    }
+    table.cal td.hour-cell {
+      font-size:11px; color:rgba(16,44,38,.4); font-weight:600;
+      background:rgba(16,44,38,.02); white-space:nowrap;
+      font-family:'Jost',system-ui,sans-serif;
+    }
+    .cal-entry .en { font-weight:700; color:#102C26; font-size:11px; }
+    .cal-entry .ep { color:rgba(16,44,38,.5); font-size:10px; }
+    .cal-entry .enotes { color:#C9A96E; font-size:10px; margin-top:2px; }
+
+    /* Admin */
+    .badge {
+      display:inline-block; padding:2px 10px; border-radius:20px;
+      font-size:10px; font-weight:400; letter-spacing:.04em;
+      font-family:'Jost',system-ui,sans-serif;
+    }
+    .res-card {
+      background:#fff; border:1.5px solid rgba(16,44,38,.08);
+      border-radius:2px; padding:16px 18px;
+      display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;
+      transition:box-shadow .2s;
+    }
+    .res-card:hover { box-shadow:0 4px 20px rgba(16,44,38,.07); }
+    .adm-action-btn {
+      padding:5px 12px; border-radius:2px;
+      font-family:'Jost',system-ui,sans-serif;
+      font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+      cursor:pointer; transition:all .15s;
+    }
+    .sf {
+      padding:5px 14px; border-radius:20px;
+      border:1px solid rgba(16,44,38,.15); background:#fff;
+      color:#374151; font-size:10px; font-weight:400; letter-spacing:.08em; text-transform:uppercase;
+      font-family:'Jost',system-ui,sans-serif; cursor:pointer;
+    }
+    .sf.active { background:#102C26; color:#F7E7CE; border-color:#102C26; }
+
+    @media (max-width:1024px) {
+      .sidebar-form { min-height:auto !important; }
+    }

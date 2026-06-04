@@ -1,0 +1,208 @@
+<!-- Działanie:
+    1. Użytkownik wpisuje dane i klika "Zaloguj się" lub "Utwórz konto"
+    2. Strona wysyła zapytanie do server.js (port 3000):
+         POST /api/konta/logowanie   — logowanie
+         POST /api/konta/rejestracja — rejestracja
+    3. Dane konta zapisywane są w localStorage pod kluczem "cafe_konto_sesja"
+    4. Po sukcesie — automatyczne przekierowanie do Nowy.html
+
+  Jeśli sesja już istnieje (użytkownik był zalogowany) → od razu przekierowanie do Nowy.html
+  Dane kont przechowywane są w tabeli "konta" w database.db -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Café JaKi — Logowanie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="style/logowanie.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            green:  '#102C26',
+            green2: '#1a3d35',
+            cream:  '#F7E7CE',
+            gold:   '#C9A96E',
+            cafe:   '#FDFAF6',
+          },
+          fontFamily: {
+            display: ['"Cormorant Garamond"','Georgia','serif'],
+            body:    ['"Jost"','system-ui','sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-cafe text-green min-h-screen overflow-x-hidden flex flex-col">
+
+<!-- Nawigacja stała — logo (link do index.html) + napis "System rezerwacji" -->
+<!-- ══ NAV ═══════════════════════════════════════════════════════════════ -->
+<nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-5"
+     style="background:rgba(16,44,38,.95);backdrop-filter:blur(20px)">
+  <a href="index.html" class="font-display text-xl font-light tracking-[.06em] text-cream hover:text-gold transition-colors">Café JaKi</a>
+  <span class="text-[10px] font-light tracking-[.2em] uppercase text-cream/30">System rezerwacji</span>
+</nav>
+
+<!-- Pasek ten z rysunkiem z tym czymś do robienia kawy — zdjęcie z napisem "Witaj z powrotem" -->
+<div class="relative h-[260px] flex items-end overflow-hidden mt-16">
+  <div class="hero-bg absolute inset-0"></div>
+  <div class="grain absolute inset-0 opacity-40 pointer-events-none"></div>
+  <div class="relative z-10 px-10 pb-10 anim-up">
+    <p class="text-[10px] tracking-[.4em] uppercase text-gold mb-3">Café JaKi</p>
+    <h1 class="font-display text-[clamp(40px,7vw,80px)] font-light leading-[.95] text-cream">
+      Witaj <em class="italic text-gold">z powrotem</em>
+    </h1>
+  </div>
+</div>
+
+<!--body -->
+<div class="grid grid-cols-1 lg:grid-cols-[480px_1fr] flex-1">
+
+  <!-- SIDEBAR (lewa kolumna, ciemnozielona) — formularze logowania i rejestracji -->
+  <!-- Zakładki przełączają między panel-logowanie a panel-rejestracja -->
+  <!-- SIDEBAR: formularze -->
+  <aside class="relative bg-green px-10 py-14 flex flex-col overflow-hidden">
+    <!-- dekoracyjne pierścienie -->
+    <div class="absolute w-[380px] h-[380px] rounded-full border border-cream/[.05] -bottom-24 -right-24 pointer-events-none"></div>
+    <div class="absolute w-[220px] h-[220px] rounded-full border border-cream/[.04] top-10 -right-14 pointer-events-none"></div>
+
+    <p class="text-[9px] tracking-[.35em] uppercase text-gold mb-2">Twoje konto</p>
+    <h2 class="font-display text-[clamp(26px,4vw,40px)] font-light text-cream leading-tight mb-8">
+      Zaloguj się, aby <em class="italic">zarezerwować</em>
+    </h2>
+
+    <!-- Zakładki -->
+    <div class="flex border-b border-cream/10 mb-8">
+      <button class="atab active" data-tab="logowanie">Zaloguj się</button>
+      <button class="atab" data-tab="rejestracja">Utwórz konto</button>
+    </div>
+
+    <!-- panel do logowania -->
+    <div id="panel-logowanie" class="auth-panel">
+      <div id="log-alert" class="hidden text-red-300 text-[11px] tracking-[.04em] bg-red-900/30 border border-red-400/30 rounded-sm px-4 py-3 mb-5"></div>
+
+      <div class="mb-4">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Email</label>
+        <input type="email" id="l-email" class="si" placeholder="twoj@email.pl" />
+      </div>
+      <div class="mb-7">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Hasło</label>
+        <input type="password" id="l-haslo" class="si" placeholder="••••••••" />
+      </div>
+
+      <button id="btn-logowanie"
+              class="w-full py-4 bg-cream text-green text-[10px] tracking-[.28em] uppercase font-light rounded-sm transition-all hover:bg-gold hover:tracking-[.35em] flex items-center justify-center gap-2.5">
+        <span id="log-label">Zaloguj się</span>
+        <div class="spin spin-light"></div>
+      </button>
+
+      <p class="text-center text-[11px] font-extralight text-cream/25 tracking-[.05em] mt-5">
+        Nie masz konta? Kliknij <button onclick="przelaczTab('rejestracja')"
+          class="text-gold hover:underline bg-transparent border-none cursor-pointer text-[11px] font-extralight tracking-[.05em]">Utwórz konto</button>.
+      </p>
+    </div>
+
+    <!-- panel rejestracji -->
+    <div id="panel-rejestracja" class="auth-panel hidden">
+      <div id="reg-alert" class="hidden text-red-300 text-[11px] tracking-[.04em] bg-red-900/30 border border-red-400/30 rounded-sm px-4 py-3 mb-5"></div>
+
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Imię *</label>
+          <input type="text" id="r-imie" class="si" placeholder="Anna" />
+        </div>
+        <div>
+          <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Nazwisko *</label>
+          <input type="text" id="r-nazwisko" class="si" placeholder="Kowalska" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Email *</label>
+        <input type="email" id="r-email" class="si" placeholder="twoj@email.pl" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Hasło * (min. 6 znaków)</label>
+        <input type="password" id="r-haslo" class="si" placeholder="••••••••" />
+      </div>
+      <div class="mb-7">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Potwierdź hasło *</label>
+        <input type="password" id="r-haslo2" class="si" placeholder="••••••••" />
+      </div>
+
+      <button id="btn-rejestracja"
+              class="w-full py-4 bg-cream text-green text-[10px] tracking-[.28em] uppercase font-light rounded-sm transition-all hover:bg-gold hover:tracking-[.35em] flex items-center justify-center gap-2.5">
+        <span id="reg-label">Utwórz konto</span>
+        <div class="spin spin-light"></div>
+      </button>
+
+      <p class="text-center text-[11px] font-extralight text-cream/25 tracking-[.05em] mt-5">
+        Masz już konto? Kliknij <button onclick="przelaczTab('logowanie')"
+          class="text-gold hover:underline bg-transparent border-none cursor-pointer text-[11px] font-extralight tracking-[.05em]">Zaloguj się</button>.
+      </p>
+    </div>
+  </aside>
+
+  <!-- MAIN (prawa kolumna) — informacje o systemie rezerwacji, lista funkcji -->
+  <main class="px-12 py-16 flex flex-col justify-center" style="background:#FDFAF6">
+    <div class="max-w-md anim-up" style="animation-delay:.15s">
+      <p class="text-[9px] tracking-[.35em] uppercase text-gold mb-3">Café JaKi</p>
+      <h2 class="font-display text-[clamp(32px,5vw,58px)] font-light text-green leading-[1.05] mb-6">
+        Twój stolik <em class="italic">czeka</em>
+      </h2>
+      <p class="text-[13px] font-extralight text-[#6b7c6f] leading-[1.9] tracking-[.05em] mb-10">
+        Zaloguj się lub utwórz konto, aby zarezerwować stolik w Café JaKi.<br>
+        Możesz też zamówić z menu z wyprzedzeniem — wszystko gotowe na Twoje przybycie.
+      </p>
+
+      <!-- Cechy systemu do rezerwacji -->
+      <div class="flex flex-col gap-5">
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-sm bg-green flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-cream text-[14px]">✦</span>
+          </div>
+          <div>
+            <p class="text-[12px] font-light text-green mb-0.5">Rezerwacja stolika</p>
+            <p class="text-[11px] font-extralight text-[#6b7c6f] leading-[1.7]">Wybierz datę, godzinę i liczbę gości — system sam przydzieli odpowiedni stolik.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-sm bg-green flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-cream text-[14px]">✦</span>
+          </div>
+          <div>
+            <p class="text-[12px] font-light text-green mb-0.5">Zamówienie z menu</p>
+            <p class="text-[11px] font-extralight text-[#6b7c6f] leading-[1.7]">Wybierz kawę, herbatę, matchę lub deser — Twoje zamówienie będzie gotowe przy wejściu.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-sm bg-green flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-cream text-[14px]">✦</span>
+          </div>
+          <div>
+            <p class="text-[12px] font-light text-green mb-0.5">Alergeny i życzenia specjalne</p>
+            <p class="text-[11px] font-extralight text-[#6b7c6f] leading-[1.7]">Zaznacz alergeny i dodaj notatki — nasz zespół zadba o Twój komfort.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- stópka-->
+<footer class="bg-green text-cream px-10 py-8 flex justify-between items-center flex-wrap gap-4 border-t border-cream/10">
+  <span class="font-display text-xl font-light tracking-[.05em]">Café JaKi</span>
+  <span class="text-[10px] font-extralight tracking-[.1em] text-cream/30">© 2026 Café JaKi</span>
+</footer>
+
+<div id="toast"></div>
+
+<!--javascript -->
+<script src="js/logowanie.js"></script>
+</body>
+</html>

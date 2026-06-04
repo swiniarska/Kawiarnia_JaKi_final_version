@@ -1,0 +1,373 @@
+<!--Główna aplikacja rezerwacji. Dostęp tylko po zalogowaniu przez logowanie.html.
+  Przy wejściu sprawdza localStorage — jeśli brak sesji, przekierowuje do logowania.
+
+  Trzy widoki (zakładki w nav):
+    1. Rezerwacja  — formularz danych + wybór z menu + podsumowanie zamówienia
+    2. Kalendarz   — tabela dzienna pokazująca zajętość stolików
+    3. Admin       — panel z listą rezerwacji, statystykami i klientami (hasło: admin123)
+
+  Połączenie z bazą danych (server.js port 3000):
+    GET  /api/reservations        — ładowanie rezerwacji przy starcie
+    POST /api/reservations        — zapis nowej rezerwacji (z menu i alergenami w polu notes)
+    PATCH /api/reservations/:id   — zmiana statusu (panel admina)
+    DELETE /api/reservations/:id  — usuwanie rezerwacji (panel admina) !-->
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Café JaKi — Rezerwacja z zamówieniem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="style/nowy.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            green:  '#102C26',
+            green2: '#1a3d35',
+            cream:  '#F7E7CE',
+            gold:   '#C9A96E',
+            cafe:   '#FDFAF6',
+          },
+          fontFamily: {
+            display: ['"Cormorant Garamond"','Georgia','serif'],
+            body:    ['"Jost"','system-ui','sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-cafe text-green min-h-screen overflow-x-hidden flex flex-col">
+
+<!-- Nawigacja stała — logo + zakładki (Rezerwacja / Kalendarz / Admin) + imię zalogowanego + Wyloguj -->
+<!-- Wyloguj usuwa sesję z localStorage i przekierowuje do logowanie.html -->
+<!-- ══ NAV ═══════════════════════════════════════════════════════════════ -->
+<nav class="fixed top-0 left-0 right-0 z-50" style="background:rgba(16,44,38,.95);backdrop-filter:blur(20px)">
+  <div class="flex items-center justify-between px-8 py-0">
+    <a href="index.html" class="font-display text-xl font-light tracking-[.06em] text-cream py-4">Café JaKi</a>
+    <div class="flex items-center">
+      <button class="nav-tab active" data-view="reserve">Rezerwacja</button>
+      <button class="nav-tab" data-view="calendar">Kalendarz</button>
+      <button class="nav-tab" data-view="admin">Admin</button>
+    </div>
+    <div class="hidden sm:flex items-center gap-4">
+      <span id="nav-user-name" class="text-[11px] font-light tracking-[.08em] text-cream/60"></span>
+      <button id="btn-nav-logout" class="text-[10px] font-light tracking-[.2em] uppercase text-cream/40 hover:text-gold transition-colors bg-transparent border-none cursor-pointer">Wyloguj</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Wypełnia przestrzeń pod stałą nawigacją tym samym kolorem -->
+<div class="h-16" style="background:rgba(16,44,38,.95)"></div>
+
+<!-- Pasek hero — zdjęcie kawiarni z tytułem strony, zawsze widoczny -->
+<!-- ══ HERO STRIP ═════════════════════════════════════════════════════════ -->
+<div class="relative h-[260px] flex items-end overflow-hidden">
+  <div class="hero-bg absolute inset-0"></div>
+  <div class="grain absolute inset-0 opacity-40 pointer-events-none"></div>
+  <div class="relative z-10 px-10 pb-10 anim-up">
+    <p class="text-[10px] tracking-[.4em] uppercase text-gold mb-3">Rezerwacja i zamówienie</p>
+    <h1 class="font-display text-[clamp(38px,7vw,78px)] font-light leading-[.95] text-cream">
+      Zarezerwuj <em class="italic text-gold">stolik</em>
+    </h1>
+  </div>
+</div>
+
+<!-- rezereacja -->
+
+<div id="view-reserve" class="view active flex-1">
+  <div class="grid grid-cols-1 lg:grid-cols-[420px_1fr]">
+
+    <!-- SIDEBAR (lewa kolumna, ciemnozielona) — dane rezerwacji: imię, telefon, goście, data, godzina, uwagi -->
+    <!-- Po kliknięciu "Zarezerwuj" wysyła POST do /api/reservations + dołącza menu i alergeny do pola notes -->
+    <!-- ── SIDEBAR: formularz rezerwacji ──────────────────────────────── -->
+    <aside class="sidebar-form relative bg-green px-8 py-12 flex flex-col overflow-hidden" style="min-height:620px">
+      <!-- dekoracyjne pierścienie -->
+      <div class="absolute w-[350px] h-[350px] rounded-full border border-cream/[.05] -bottom-20 -right-20 pointer-events-none"></div>
+      <div class="absolute w-[200px] h-[200px] rounded-full border border-cream/[.04] top-8 -right-12 pointer-events-none"></div>
+
+      <p class="text-[9px] tracking-[.35em] uppercase text-gold mb-2">Twoja rezerwacja</p>
+      <h2 class="font-display text-[clamp(24px,3.5vw,38px)] font-light text-cream leading-tight mb-8">
+        Kiedy <em class="italic">przyjeżdżasz?</em>
+      </h2>
+
+      <!-- alert -->
+      <div id="form-alert" class="hidden text-[12px] tracking-[.03em] rounded-sm px-4 py-3 mb-6"></div>
+
+      <!-- Imię i nazwisko -->
+      <div class="mb-4">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Imię i nazwisko *</label>
+        <input type="text" id="f-name" class="si" placeholder="Norbert Gierczak" />
+      </div>
+
+      <!-- Telefon -->
+      <div class="mb-4">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Numer telefonu *</label>
+        <input type="tel" id="f-phone" class="si" placeholder="+48 213 767 691" />
+      </div>
+
+      <!-- Liczba gości -->
+      <div class="mb-4">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Liczba gości *</label>
+        <select id="f-size" class="si cursor-pointer">
+          <option value="1">1 osoba</option>
+          <option value="2" selected>2 osoby</option>
+          <option value="3">3 osoby</option>
+          <option value="4">4 osoby</option>
+        </select>
+      </div>
+
+      <!-- Data -->
+      <div class="mb-5">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Data *</label>
+        <input type="date" id="f-date" class="si" />
+      </div>
+
+      <!-- Godzina -->
+      <div class="mb-6">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-3">Godzina *</label>
+        <div id="hours-wrap" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Uwagi specjalne -->
+      <div class="mb-8">
+        <label class="block text-[9px] tracking-[.3em] uppercase text-cream/40 mb-2">Uwagi specjalne</label>
+        <textarea id="f-notes" class="si" style="resize:vertical;min-height:64px" placeholder="Urodziny, rocznica, specjalna okazja…"></textarea>
+      </div>
+
+      <!-- Przycisk -->
+      <button id="btn-submit"
+              class="w-full py-4 bg-cream text-green text-[10px] tracking-[.28em] uppercase font-light rounded-sm transition-all hover:bg-gold hover:tracking-[.35em] flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+        <span id="submit-label">Zarezerwuj stolik</span>
+        <div class="spin"></div>
+      </button>
+
+      <p class="text-center text-[11px] font-extralight text-cream/30 tracking-[.05em] mt-4">
+        Zamówienie z menu zostanie dołączone do rezerwacji.
+      </p>
+
+      <!-- Legenda stolików -->
+      <div class="mt-10 pt-8 border-t border-cream/10">
+        <p class="text-[9px] tracking-[.3em] uppercase text-cream/30 mb-4">Układ kawiarni</p>
+        <div id="table-legend" class="flex flex-wrap gap-2"></div>
+      </div>
+    </aside>
+
+    <!-- MAIN (prawa kolumna, kremowa) — dwie sekcje: wybór z menu (01) i alergeny (02) -->
+    <!--  MAIN: menu + podsumowanie-->
+    <main class="px-8 py-12" style="background:#FDFAF6">
+
+      <div class="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-8 items-start">
+
+        <!-- Menu + Alergeny -->
+        <div>
+
+          <!-- 01 Menu -->
+          <div class="mb-10">
+            <span class="block text-[9px] tracking-[.35em] uppercase text-gold mb-2">01 — Wybierz z menu</span>
+            <h2 class="font-display text-[clamp(24px,3.5vw,38px)] font-light text-green mb-2">
+              Co <em class="italic">zamawiasz?</em>
+            </h2>
+            <p class="text-[12px] font-light text-[#6b7c6f] tracking-[.05em] mb-7">
+              Opcjonalnie — Twoje zamówienie będzie gotowe przy stoliku.
+            </p>
+
+            <!-- Zakładki kategorii -->
+            <div class="flex flex-wrap gap-2 mb-7" id="cat-tabs">
+              <button class="ctab active" data-cat="coffee">Kawa</button>
+              <button class="ctab" data-cat="tea">Herbata</button>
+              <button class="ctab" data-cat="matcha">Matcha</button>
+              <button class="ctab" data-cat="desserts">Deser</button>
+            </div>
+
+            <!-- Panele menu -->
+            <div id="menu-panels">
+              <div class="menu-panel" data-panel="coffee">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="items-coffee"></div>
+              </div>
+              <div class="menu-panel hidden" data-panel="tea">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="items-tea"></div>
+              </div>
+              <div class="menu-panel hidden" data-panel="matcha">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="items-matcha"></div>
+              </div>
+              <div class="menu-panel hidden" data-panel="desserts">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="items-desserts"></div>
+              </div>
+            </div>
+
+            <!-- koncert życzeń-->
+            <div class="mt-7 p-5 border border-green/10 rounded-sm" style="background:rgba(16,44,38,.02)">
+              <label class="block text-[9px] tracking-[.3em] uppercase text-green/50 mb-2">Inne życzenia / własne zamówienie</label>
+              <textarea id="u-custom" class="fi" placeholder="Np. oat milk zamiast krowiego, dodatkowy syrop, podwójne espresso…"></textarea>
+            </div>
+          </div>
+
+          <div class="h-px bg-green/8 mb-10"></div>
+
+          <!-- 02 Alergeny -->
+          <div class="mb-6">
+            <span class="block text-[9px] tracking-[.35em] uppercase text-gold mb-2">02 — Alergeny</span>
+            <h2 class="font-display text-[clamp(24px,3.5vw,38px)] font-light text-green mb-2">
+              Na co jesteś <em class="italic">uczulony?</em>
+            </h2>
+            <p class="text-[12px] font-light text-[#6b7c6f] tracking-[.05em] mb-7">
+              Zaznacz alergeny — nasz zespół zadba o bezpieczne przygotowanie.
+            </p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5" id="allergen-grid"></div>
+            <div>
+              <label class="block text-[9px] tracking-[.3em] uppercase text-green/40 mb-2">Inne alergeny / uwagi dietetyczne</label>
+              <textarea id="u-allergen-custom" class="fi" placeholder="Np. nietolerancja laktozy, dieta wegańska…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Podsumowanie sticky — trzyma się prawej strony podczas scrollowania -->
+        <!-- Pokazuje wybrane pozycje menu, sumę cen i szczegóły wizyty (data/godzina/goście) -->
+        <!-- Podsumowanie zamówienia (sticky)─ -->
+        <div style="position:sticky;top:88px;align-self:start">
+          <div class="border border-green/10 rounded-sm overflow-hidden mb-4">
+
+            <!-- Nagłówek -->
+            <div class="bg-green px-6 py-5">
+              <p class="text-[9px] tracking-[.35em] uppercase text-gold mb-1">Twoje zamówienie</p>
+              <p class="font-display text-[22px] font-light text-cream">Podsumowanie</p>
+            </div>
+
+            <!-- Lista pozycji -->
+            <div class="px-6 py-5 bg-white">
+              <div id="s-empty" class="text-center py-6 text-[12px] font-light text-[#6b7c6f] opacity-60">
+                Brak wybranych pozycji
+              </div>
+              <div id="s-list" class="hidden"></div>
+              <div id="s-total" class="hidden border-t border-green/10 mt-4 pt-4 flex justify-between items-center">
+                <span class="text-[10px] tracking-[.2em] uppercase text-green/50">Łącznie</span>
+                <span class="font-display text-[22px] font-light text-green" id="s-price">0.00 zł</span>
+              </div>
+            </div>
+
+            <!-- Szczegóły wizyty -->
+            <div class="border-t border-green/8 px-6 py-5" style="background:#FDFAF6">
+              <p class="text-[9px] tracking-[.3em] uppercase text-green/40 mb-4">Szczegóły wizyty</p>
+              <div class="space-y-2">
+                <div class="flex justify-between text-[12px]">
+                  <span class="font-light text-[#6b7c6f]">Data</span>
+                  <span class="font-light text-green" id="s-date">—</span>
+                </div>
+                <div class="flex justify-between text-[12px]">
+                  <span class="font-light text-[#6b7c6f]">Godzina</span>
+                  <span class="font-light text-green" id="s-time">—</span>
+                </div>
+                <div class="flex justify-between text-[12px]">
+                  <span class="font-light text-[#6b7c6f]">Goście</span>
+                  <span class="font-light text-green" id="s-guests">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alergeny recap -->
+            <div id="s-allerg-wrap" class="hidden border-t border-green/8 px-6 py-4" style="background:#FDFAF6">
+              <p class="text-[9px] tracking-[.3em] uppercase text-green/40 mb-1.5">Alergeny</p>
+              <p class="text-[12px] font-light text-amber-700" id="s-allerg"></p>
+            </div>
+          </div>
+
+          <!-- Info o zamówieniu -->
+          <div class="border border-gold/25 rounded-sm px-5 py-4" style="background:rgba(201,169,110,.06)">
+            <p class="text-[10px] tracking-[.15em] uppercase text-gold mb-1.5">Opcjonalnie</p>
+            <p class="font-display text-[16px] font-light text-green mb-1">Zamów z wyprzedzeniem</p>
+            <p class="text-[11px] font-light text-[#6b7c6f] leading-[1.8]">
+              Wybrane pozycje z menu zostaną zapisane razem z rezerwacją i będą gotowe przy stoliku.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- kalendarz, tabela dzienna: kolumny = stoliki (1-5), wiersze = godziny (9:00-21:00)
+     Kolorowe komórki = zajęte terminy, białe = wolne
+     Data wybierana przez datepicker, dane z GET /api/reservations -->
+<div id="view-calendar" class="view flex-1">
+  <div class="max-w-6xl mx-auto px-8 py-12">
+    <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+      <div>
+        <p class="text-[9px] tracking-[.35em] uppercase text-gold mb-1">Widok dzienny</p>
+        <h2 class="font-display text-[clamp(26px,4vw,44px)] font-light text-green">Kalendarz <em class="italic">rezerwacji</em></h2>
+      </div>
+      <div class="flex items-center gap-4 flex-wrap">
+        <span id="cal-meta" class="text-[12px] font-light text-[#6b7c6f]"></span>
+        <input type="date" id="cal-date" class="fi" style="width:auto" />
+      </div>
+    </div>
+    <div class="cal-scroll">
+      <table class="cal" id="cal-table"></table>
+    </div>
+  </div>
+</div>
+
+<!-- admin
+     Logowanie: admin@cafe.pl / admin123
+     Zakładki: Rezerwacje (lista + filtry statusu) | Statystyki | Klienci
+     Akcje na rezerwacjach zapisywane są do bazy przez PATCH i DELETE /api/reservations/:id -->
+<div id="view-admin" class="view flex-1">
+  <div class="max-w-4xl mx-auto px-8 py-12">
+
+    <!-- Login -->
+    <div id="admin-login">
+      <div class="max-w-sm mx-auto">
+        <p class="text-[9px] tracking-[.35em] uppercase text-gold mb-2">Dostęp</p>
+        <h2 class="font-display text-[clamp(26px,4vw,40px)] font-light text-green mb-8">Panel <em class="italic">administratora</em></h2>
+        <div id="login-err" class="hidden text-red-700 text-[12px] bg-red-50 border border-red-200 rounded-sm px-4 py-3 mb-5 tracking-[.03em]">
+          Nieprawidłowy email lub hasło.
+        </div>
+        <div class="mb-4">
+          <label class="block text-[9px] tracking-[.3em] uppercase text-green/40 mb-2">Email</label>
+          <input type="email" id="adm-email" class="fi" placeholder="admin@cafe.pl" />
+        </div>
+        <div class="mb-6">
+          <label class="block text-[9px] tracking-[.3em] uppercase text-green/40 mb-2">Hasło</label>
+          <input type="password" id="adm-pass" class="fi" placeholder="••••••••" />
+        </div>
+        <button id="btn-login"
+                class="w-full py-3.5 bg-green text-cream text-[10px] tracking-[.28em] uppercase font-light rounded-sm transition-all hover:bg-green2 hover:tracking-[.35em]">
+          Zaloguj się
+        </button>
+        <p class="text-center text-[11px] text-[#6b7c6f] font-light mt-4 tracking-[.04em]">admin@cafe.pl / admin123</p>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="admin-panel" class="hidden">
+      <div class="flex justify-between items-center border-b border-green/10 pb-6 mb-6 flex-wrap gap-4">
+        <div class="flex gap-2 flex-wrap">
+          <button class="adm-tab px-4 py-2 rounded-sm text-[10px] tracking-[.1em] uppercase font-light active bg-green text-cream" data-atab="reservations">Rezerwacje</button>
+          <button class="adm-tab px-4 py-2 rounded-sm text-[10px] tracking-[.1em] uppercase font-light text-[#6b7c6f] hover:bg-green/5" data-atab="stats">Statystyki</button>
+          <button class="adm-tab px-4 py-2 rounded-sm text-[10px] tracking-[.1em] uppercase font-light text-[#6b7c6f] hover:bg-green/5" data-atab="customers">Klienci</button>
+        </div>
+        <button id="btn-logout" class="text-[10px] tracking-[.15em] uppercase text-[#6b7c6f] hover:text-red-600 transition-colors font-light bg-transparent border-none cursor-pointer">Wyloguj</button>
+      </div>
+      <div id="adm-content"></div>
+    </div>
+  </div>
+</div>
+
+<!--stópka-->
+<footer class="bg-green text-cream px-10 py-10 flex justify-between items-center flex-wrap gap-4 border-t border-cream/10">
+  <span class="font-display text-xl font-light tracking-[.05em]">Café JaKi</span>
+  <span class="text-[10px] font-extralight tracking-[.1em] text-cream/30">© 2026 Café JaKi</span>
+</footer>
+
+<div id="toast"></div>
+
+<!-- JavaScript przeniesiony do js/nowy.js -->
+<script src="js/nowy.js"></script>
+</body>
+</html>

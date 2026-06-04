@@ -1,0 +1,298 @@
+<!--
+  index.html — Strona główna Café JaKi
+  ════════════════════════════════════
+  Pierwsza strona którą widzi użytkownik.
+  Zawiera: nawigację, sekcję hero, galerię, menu, CTA rezerwacji, newsletter, stopkę.
+
+  Powiązane pliki:
+    style/index.css  — wszystkie style tej strony
+    js/index.js      — logika: slider galerii, animacje, newsletter (port 4000)
+    logowanie.html   — przekierowanie po kliknięciu "Zamów stolik"
+
+  Uruchamianie: node server.js → otwórz http://localhost:3000/index.html
+-->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Café JaKi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style/index.css">
+</head>
+<body>
+
+<!-- Menu mobilne — widoczne tylko na małych ekranach po kliknięciu hamburgera -->
+<div id="mobile-menu">
+  <a href="#hero"       onclick="closeMenu()">Strona główna</a>
+  <div class="menu-line"></div>
+  <a href="#gallery"    onclick="closeMenu()">Galeria</a>
+  <div class="menu-line"></div>
+  <a href="#menu"       onclick="closeMenu()">Menu</a>
+  <div class="menu-line"></div>
+  <a href="#newsletter" onclick="closeMenu()">Kontakt</a>
+  <div class="menu-line"></div>
+  <a href="Nowy.html" onclick="closeMenu()">Rezerwacja</a>
+</div>
+
+<!-- Nawigacja — stała na górze ekranu, zmienia wygląd po przewinięciu (klasa "scrolled") -->
+<nav id="navbar">
+  <div class="nav-left">
+    <button class="hamburger" id="hamburger" aria-label="Otwórz menu" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="nav-logo">Café JaKi</span>
+  </div>
+  <a href="logowanie.html" class="btn-reserve">Zamów stolik</a>
+</nav>
+
+<!-- Sekcja hero — pełnoekranowe zdjęcie tła z nagłówkiem i przyciskiem CTA -->
+<!-- Przycisk "Zamów stolik" prowadzi do logowanie.html -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grain"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Kawa specjalna</p>
+    <h1 class="hero-title">Gdzie każda<br>filiżanka opowiada<br><em>historię</em></h1>
+    <p class="hero-sub">Starannie pozyskiwane ziarna, powolne rzemiosło i przestrzeń zaprojektowana na ważne chwile</p>
+    <a href="logowanie.html" class="btn-cta">Zamów stolik <span class="arrow">→</span></a>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>Przewiń</span>
+  </div>
+</section>
+
+<!-- Galeria — slider z 6 zdjęciami, obsługuje strzałki i swipe na mobile -->
+<!-- Logika slidera: js/index.js (funkcja gotoSlide) -->
+<section id="gallery">
+  <div class="gallery-header reveal">
+    <h2>Nasze<br><em>Momenty</em></h2>
+    <div class="gallery-nav">
+      <button class="gal-btn" id="gal-prev" aria-label="Poprzedni">&#8592;</button>
+      <button class="gal-btn" id="gal-next" aria-label="Następny">&#8594;</button>
+    </div>
+  </div>
+  <div class="gallery-track-wrap" id="gal-wrap">
+    <div class="gallery-track" id="gal-track" style="padding: 0 40px;">
+      <div class="gal-slide reveal reveal-delay-1">
+        <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=600&q=80" alt="Espresso" loading="lazy" />
+        <div class="gal-caption">Espresso</div>
+      </div>
+      <div class="gal-slide reveal reveal-delay-2">
+        <img src="https://images.unsplash.com/photo-1515823662972-da6a2e4d3002?w=600&q=80" alt="Matcha" loading="lazy" />
+        <div class="gal-caption">Matcha</div>
+      </div>
+      <div class="gal-slide reveal reveal-delay-3">
+        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80" alt="Latte Art" loading="lazy" />
+        <div class="gal-caption">Latte Art</div>
+      </div>
+      <div class="gal-slide">
+        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80" alt="Wnętrze kawiarni" loading="lazy" />
+        <div class="gal-caption">Wnętrze</div>
+      </div>
+      <div class="gal-slide">
+        <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&q=80" alt="Croissant" loading="lazy" />
+        <div class="gal-caption">Croissant</div>
+      </div>
+      <div class="gal-slide">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80" alt="Kawa specialty" loading="lazy" />
+        <div class="gal-caption">Kawa Specialty</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Sekcja CTA rezerwacji — zachęca do rezerwacji stolika, prowadzi do logowanie.html -->
+<section id="reserve-cta">
+  <div class="reserve-bg-text">Rezerwacja</div>
+  <div class="reserve-inner reveal">
+    <span class="label">zjedz z nami</span>
+    <h2>Twój stolik<br>na każdą <em>okazję</em></h2>
+    <p>Niezależnie od tego, czy to spokojny poranek w pojedynkę, czy miłe spotkanie - przygotujemy dla Ciebie kącik. Zarezerwuj z wyprzedzeniem i przyjdź do miejsca, które będzie Twoje.</p>
+    <a href="logowanie.html" class="btn-outline">Zarezerwuj swój stolik <span>→</span></a>
+  </div>
+</section>
+
+<!-- Menu kawiarni — 4 zakładki: Kawa, Herbata, Matcha, Deser -->
+<!-- Przełączanie zakładek obsługuje js/index.js -->
+<section id="menu">
+  <div class="container">
+    <div class="menu-header reveal">
+      <span class="label">Serwujemy</span>
+      <h2>Nasze <em>Menu</em></h2>
+    </div>
+
+    <div class="menu-tabs reveal reveal-delay-1">
+      <button class="menu-tab active" data-tab="coffee">Kawa</button>
+      <button class="menu-tab" data-tab="tea">Herbata</button>
+      <button class="menu-tab" data-tab="matcha">Matcha</button>
+      <button class="menu-tab" data-tab="desserts">Deser</button>
+    </div>
+
+    <!-- Kawy -->
+    <div class="menu-panel active" id="tab-coffee">
+      <div class="menu-card reveal">
+        <div class="card-num">01</div>
+        <div class="card-name">Espresso</div>
+        <div class="card-desc">Parzona pod ciśnieniem, wyróżniająca się intensywnym smakiem i cremą.</div>
+        <div class="card-price">16.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-1">
+        <div class="card-num">02</div>
+        <div class="card-name">Flat White</div>
+        <div class="card-desc">Podwójne espresso z niewielką ilością delikatnie spienionego mleka.</div>
+        <div class="card-price">18.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-2">
+        <div class="card-num">03</div>
+        <div class="card-name">Cappuccino</div>
+        <div class="card-desc">Klasyczne proporcje, aksamitna piana</div>
+        <div class="card-price">24.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-3">
+        <div class="card-num">04</div>
+        <div class="card-name">Latte</div>
+        <div class="card-desc">Espresso oraz duża ilość gorącego, spienionego mleka.</div>
+        <div class="card-price">22.00 <sup>PLN</sup></div>
+      </div>
+    </div>
+
+    <!-- Herbaty -->
+    <div class="menu-panel" id="tab-tea">
+      <div class="menu-card reveal">
+        <div class="card-num">01</div>
+        <div class="card-name">Earl Grey</div>
+        <div class="card-desc">Herbata czarna z dodatkiem aromatu bergamotki.</div>
+        <div class="card-price">15.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-1">
+        <div class="card-num">02</div>
+        <div class="card-name">Herbata jaśminowa</div>
+        <div class="card-desc">Herbata aromatyzowana aromatem kwiatu jaśminu.</div>
+        <div class="card-price">17.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-2">
+        <div class="card-num">03</div>
+        <div class="card-name">Sencha</div>
+        <div class="card-desc">Japońska zielona herbata przygotowywana bez mielenia liści.</div>
+        <div class="card-price">17.50 <sup>PLN</sup></div>
+      </div>
+    </div>
+
+    <!-- Matcha -->
+    <div class="menu-panel" id="tab-matcha">
+      <div class="menu-card reveal">
+        <div class="card-num">01</div>
+        <div class="card-name">Matcha Latte</div>
+        <div class="card-desc">Ceremonialna matcha ubita i wymieszana z mlekiem owsianym lub pełnotłustym.</div>
+        <div class="card-price">24.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-1">
+        <div class="card-num">02</div>
+        <div class="card-name">Truskawkowa Matcha</div>
+        <div class="card-desc">Warstwowe puree truskawkowe z matchą i zimnym mlekiem — wyraziste i orzeźwiające.</div>
+        <div class="card-price">26.50 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-2">
+        <div class="card-num">03</div>
+        <div class="card-name">Matcha na zimno</div>
+        <div class="card-desc">Matcha z lodem oraz wybranym mlekiem.</div>
+        <div class="card-price">25.50 <sup>PLN</sup></div>
+      </div>
+    </div>
+
+    <!-- Deserki -->
+    <div class="menu-panel" id="tab-desserts">
+      <div class="menu-card reveal">
+        <div class="card-num">01</div>
+        <div class="card-name">Sernik</div>
+        <div class="card-desc">W stylu nowojorskim z ciastem Biscoff i sezonowym kompotem jagodowym.</div>
+        <div class="card-price">29.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-1">
+        <div class="card-num">02</div>
+        <div class="card-name">Tiramisu</div>
+        <div class="card-desc">Savoiardi namoczone w espresso jednorodnym, przełożone mascarpone.</div>
+        <div class="card-price">30.50 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-2">
+        <div class="card-num">03</div>
+        <div class="card-name">Croissant</div>
+        <div class="card-desc">Ciasto maślane, pieczone codziennie — zwykłe, migdałowe lub czekoladowe.</div>
+        <div class="card-price">22.00 <sup>PLN</sup></div>
+      </div>
+      <div class="menu-card reveal reveal-delay-3">
+        <div class="card-num">04</div>
+        <div class="card-name">Brownie</div>
+        <div class="card-desc">Brownie z gorzkiej czekolady, gęste i delikatnie ciepłe.</div>
+        <div class="card-price">28.50 <sup>PLN</sup></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Newsletter — formularz zapisu na email po wpisaniu adresu wywołuje mikroserwis Clojure (port 4000) który wysyła email na caffeejaki@gmail.com -->
+<section id="newsletter">
+  <div class="nl-deco"></div>
+  <div class="nl-deco"></div>
+  <div class="newsletter-inner reveal">
+    <span class="label">Pozostańmy w kontakcie</span>
+    <h2>Sztuka<br>wolnych <em>poranków</em></h2>
+    <p>Dołącz do naszego kręgu. Otrzymaj sezonowe menu, przewodniki po browarach i wczesny dostęp do degustacji — dostarczane dyskretnie, bez tłumów.</p>
+    <div class="nl-form" id="nl-form">
+      <input type="email" class="nl-input" id="nl-email" placeholder="twój@email.com" aria-label="Adres email" />
+      <button class="nl-btn" id="nl-submit">Dołącz</button>
+    </div>
+    <p class="nl-msg" id="nl-msg"></p>
+  </div>
+</section>
+
+<!-- Stopka — kontakt, godziny otwarcia, adres, link do mapy Google -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-col">
+      <h3>Kontakt</h3>
+      <a href="tel:+48123321231">+48 123 321 231</a>
+      <a href="mailto:caffeejaki@gmail.com">caffeejaki@gmail.com</a>
+      <a href="https://instagram.com" class="ig-link" target="_blank" rel="noopener">
+        <svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+          <circle cx="12" cy="12" r="4"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+        @cafeJaKi
+      </a>
+    </div>
+    <div class="footer-sep"></div>
+    <div class="footer-col">
+      <h3>Godziny otwarcia</h3>
+      <dl class="footer-hours">
+        <dt>Poniedziałek - Piątek</dt>
+        <dd>9:00 — 21:00</dd>
+        <dt>Weekendy</dt>
+        <dd>9:00 — 18:00</dd>
+      </dl>
+    </div>
+    <div class="footer-sep"></div>
+    <div class="footer-col">
+      <h3>Znajdź Nas</h3>
+      <p>Szkolna 17<br>15-640 Białystok</p>
+      <a href="https://www.google.com/maps/dir/51.5269974,20.003667/Szkolna+17,+15-640+Bia%C5%82ystok/@52.2718967,18.7151611,7z/data=!3m1!4b1!4m9!4m8!1m1!4e1!1m5!1m1!1s0x471ffb77be52e62b:0x4a4db44c509e31aa!2m2!1d23.0863703!2d53.1233754?entry=ttu&g_ep=EgoyMDI2MDUxMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener" style="color:var(--gold);margin-top:12px;font-size:11px;letter-spacing:.15em">
+        Mapa →
+      </a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-logo">Café JaKi</span>
+    <span class="footer-copy">© 2026 Café JaKi. Wszelkie prawa zastrzeżone.</span>
+  </div>
+</footer>
+
+<script src="js/index.js"></script>
+</body>
+</html>
